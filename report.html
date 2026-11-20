@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>MixCoffee 展場營收報表</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap">
+<style>
+:root{
+  --paper:#f2efe6; --card:#fbfaf5; --ink:#24302a; --muted:#66706a; --rule:#c9c6b8;
+  --cherry:#a33a2c; --leaf:#3f5d4c; --chip:#e6e3d6;
+  --ya:#FFC21A; --yat:#B07800; --pk:#E3307C; --pu:#7A2E8E;
+  --f-display:"LXGW WenKai TC","Kaiti TC","STKaiti",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --f-num:"Fraunces",Georgia,serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;padding-bottom:96px;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:1000px;margin:0 auto;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) 20px max(12px,env(safe-area-inset-left))}
+header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:8px}
+.brand{font-family:var(--f-num);font-weight:700;font-size:28px;line-height:1}.brand span{color:var(--cherry)}
+.sub{font-family:var(--f-display);font-size:18px}
+.today{margin-left:auto;font-size:13px;color:var(--muted)}
+.syncst{width:100%;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}.syncst i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.tabs{display:flex;gap:6px;margin:10px 0 12px;overflow-x:auto}
+.tabs button{flex:none;font:inherit;font-family:var(--f-display);font-size:16px;padding:6px 13px;border-radius:999px;border:1px solid var(--ink);background:transparent;color:var(--ink)}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+[hidden]{display:none!important}
+h2{font-family:var(--f-display);font-size:20px;margin:14px 0 8px;display:flex;align-items:center;gap:8px}
+h2 .z{font-family:var(--f-num);font-size:26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.p{position:relative;font:inherit;text-align:left;border:1px solid var(--rule);border-radius:12px;background:var(--card);padding:12px 12px 10px;min-height:92px;display:grid;gap:2px;color:var(--ink);cursor:pointer;overflow:hidden;touch-action:manipulation}
+.p::before{content:"";position:absolute;inset:0 0 auto;height:6px;background:var(--c,var(--leaf))}
+.p[data-id=rd]{--c:var(--leaf)}.p[data-id=rd] .pr{font-family:var(--f-body);font-size:14px;color:var(--leaf)}
+.p.a{--c:var(--ya)}.p.b{--c:var(--pk)}.p.o{--c:var(--pu)}
+.p:active{transform:scale(.97)}
+.p b{font-size:17px;padding-top:2px}
+.p .pr{font-family:var(--f-num);font-weight:700;font-size:16px}
+.p .st{font-size:12px;color:var(--muted)}
+.p .st.low{color:var(--cherry);font-weight:700}
+.p .n{position:absolute;top:10px;right:10px;min-width:30px;height:30px;border-radius:999px;background:var(--cherry);color:#fff;font-family:var(--f-num);font-weight:700;display:grid;place-items:center;font-size:16px;padding:0 6px}
+.p:disabled{opacity:.45;cursor:default}
+.p:disabled .st{color:var(--cherry);font-weight:700}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--ink);color:var(--paper);display:flex;align-items:center;gap:10px;padding:12px max(14px,env(safe-area-inset-left)) calc(12px + env(safe-area-inset-bottom))}
+.bar .sum{flex:1;line-height:1.25}.bar .sum b{font-family:var(--f-num);font-size:26px}.bar small{font-size:12px;opacity:.85}
+.btn{font:inherit;font-weight:700;border:0;border-radius:999px;padding:11px 22px;cursor:pointer;background:var(--cherry);color:#fff}
+.btn:disabled{opacity:.4}
+.btn.ghost{background:transparent;color:inherit;border:1px solid currentColor}
+.btn.leaf{background:var(--leaf)}
+.btn.sm{padding:6px 12px;font-size:13px}
+dialog{border:0;border-radius:14px;padding:0;width:min(560px,96vw);max-height:94vh;background:var(--paper);color:var(--ink)}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+.dlg{padding:18px;display:grid;gap:12px}
+.dlg h3{font-family:var(--f-display);font-size:22px;margin:0;display:flex;justify-content:space-between;align-items:center}
+.dlg h3 button{font-size:24px;background:none;border:0;color:var(--muted);padding:2px 8px}
+.ln{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px dashed var(--rule)}
+.ln .nm{flex:1}.ln .nm small{display:block;color:var(--muted);font-size:12px}
+.ln .amt{font-family:var(--f-num);font-weight:700;min-width:64px;text-align:right}
+.ln.disc .nm,.ln.disc .amt{color:var(--cherry)}
+.ln.gift .nm{color:var(--leaf);font-weight:700}
+.qty{display:inline-flex;align-items:center;border:1px solid var(--rule);border-radius:999px;background:var(--card)}
+.qty button{width:36px;height:34px;border:0;background:none;font-size:18px;color:var(--ink)}
+.qty span{min-width:26px;text-align:center;font-family:var(--f-num);font-weight:700}
+.tot{display:flex;justify-content:space-between;align-items:baseline;font-weight:700;font-size:17px;border-top:2px solid var(--ink);padding-top:8px}
+.tot b{font-family:var(--f-num);font-size:30px;color:var(--cherry)}
+.pay{display:flex;gap:8px;flex-wrap:wrap}
+.pay label{flex:1}
+.pay input{position:absolute;opacity:0}
+.pay span{display:block;text-align:center;padding:9px 6px;border:1px solid var(--rule);border-radius:10px;background:var(--card);font-weight:700}
+.pay input:checked+span{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.cash{display:grid;gap:6px;background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:10px 12px}
+.cash .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.cash input{font:inherit;font-family:var(--f-num);font-size:20px;width:120px;padding:6px 8px;border:1px solid var(--rule);border-radius:8px;background:#fff;color:var(--ink)}
+.chg{font-size:16px}.chg b{font-family:var(--f-num);font-size:24px;color:var(--leaf)}
+.note{font-size:13px;color:var(--muted);margin:0}
+.toast{position:fixed;left:50%;top:20px;transform:translateX(-50%);background:var(--leaf);color:#fff;padding:10px 20px;border-radius:999px;font-weight:700;z-index:50;box-shadow:0 6px 18px rgba(0,0,0,.2)}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--rule);border-radius:10px;overflow:hidden;font-size:14px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--rule);text-align:right;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--chip);font-weight:700;font-size:13px}
+td.zero{color:var(--muted)}
+td.low{color:var(--cherry);font-weight:700}
+tr.sumrow td{font-weight:700;background:var(--chip)}
+.kpi{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:12px}
+.kpi div{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:10px 12px}
+.kpi small{display:block;color:var(--muted);font-size:12px}
+.kpi b{font-family:var(--f-num);font-size:24px}
+.days{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.days button{font:inherit;font-size:14px;padding:5px 12px;border-radius:999px;border:1px solid var(--rule);background:var(--card);color:var(--ink)}
+.days button.on{background:var(--cherry);color:#fff;border-color:var(--cherry)}
+.stockin{width:72px;font:inherit;font-family:var(--f-num);font-size:17px;text-align:right;padding:5px 6px;border:1px solid var(--rule);border-radius:8px;background:#fff;color:var(--ink)}
+.order{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:10px 12px;margin-bottom:8px;display:grid;gap:4px}
+.order.void{opacity:.5}
+.order .hd{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.order .hd b{font-family:var(--f-num);font-size:18px}
+.order .hd .t{color:var(--muted);font-size:13px}
+.order .hd .sp{flex:1}
+.order .it{font-size:14px}
+.tag{font-size:11px;padding:1px 7px;border-radius:4px;border:1px solid currentColor;color:var(--leaf)}
+.tag.v{color:var(--cherry)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+th{white-space:nowrap}.btn.sm{white-space:nowrap}
+#ktbl th,#ktbl td{padding:8px 6px}#ktbl td:first-child{white-space:normal}
+#rlist td,#rlist th{text-align:left;padding:8px 6px}
+.empty{color:var(--muted);text-align:center;padding:30px 0}
+</style>
+<div class="wrap">
+  <header>
+    <div class="brand">MIX<span>COFFEE</span></div>
+    <div class="sub">展場營收報表</div>
+    <div class="today" id="today"></div>
+    <div class="syncst" id="sync"></div>
+  </header>
+  <div class="tabs" role="tablist">
+    <button role="tab" data-p="stat" aria-selected="true">每日統計</button>
+    <button role="tab" data-p="stock" aria-selected="false">庫存</button>
+    <button role="tab" data-p="list" aria-selected="false">訂單紀錄</button>
+  </div>
+
+  <section id="p-sell" hidden>
+    <p class="note" id="noStock" hidden style="background:#fff3c4;color:#6b4a00;padding:10px 12px;border-radius:10px;font-size:14px">還沒有填庫存，豆子都會顯示「售完」。請先到上面的「庫存」分頁，填好每款帶來的數量。</p>
+    <h2><span class="z" style="color:var(--yat)">A</span> 區　<small class="note">一包 $600</small></h2>
+    <div class="grid" id="gA"></div>
+    <h2><span class="z" style="color:var(--pk)">B</span> 區　<small class="note">一包 $700</small></h2>
+    <div class="grid" id="gB"></div>
+    <h2>其他</h2>
+    <div class="grid" id="gO"></div>
+    <p class="note" style="margin-top:12px">點一下商品就加一個。A、B 區豆子每兩包自動算組合價（每組 −$100、送特調一杯）；單筆滿 $3,000 自動送「宮」玻璃杯。客人拿送的特調來換時，點「兌換贈送特調」再結帳（$0），就會記錄換了幾杯。</p>
+  </section>
+
+  <section id="p-stat">
+    <div class="days" id="days"></div>
+    <div class="kpi" id="kpi"></div>
+    <table id="stbl"></table>
+    <div class="acts"><button class="btn leaf" id="csv">下載訂單明細（Excel 可開）</button></div>
+  </section>
+
+  <section id="p-stock" hidden>
+    <p class="note">「一開始帶來」填第一天帶到展場的數量。之後有補貨，按那一行的「＋補貨」輸入補了幾包就好，「剩下」會自動加上去。</p>
+    <table id="ktbl" style="margin-top:8px"></table>
+    <div class="acts"><button class="btn" id="saveStock">儲存「一開始帶來」</button></div>
+    <h2>補貨紀錄</h2><div id="rlist"></div>
+  </section>
+
+  <section id="p-set" hidden>
+    <div class="cash" style="gap:10px">
+      <label>這支手機的名字（訂單編號會用，例如「收銀1」）<br><input id="devName" style="width:200px;font-family:var(--f-body)"></label>
+      <label>Google 同步網址（每支手機都要填一樣的）<br><input id="syncUrl" style="width:100%;font-size:14px;font-family:var(--f-body)" placeholder="https://script.google.com/macros/s/……/exec"></label>
+      <div class="acts" style="margin-top:0"><button class="btn" id="saveSet">儲存並同步</button><button class="btn ghost" id="syncNow">立刻同步</button></div>
+    </div>
+    <p class="note" style="margin-top:10px">填了同步網址，每一筆訂單、補貨、庫存都會自動上傳到 Google 試算表，其他手機每 15 秒會自動抓最新資料。沒有網路時會先存在手機，有網路再自動補傳。</p>
+  </section>
+
+  <section id="p-list" hidden>
+    <div id="olist"></div>
+    <div class="acts"><button class="btn ghost" id="wipe" style="color:var(--cherry)">清除全部訂單（展覽前測試用）</button></div>
+  </section>
+</div>
+
+<div class="bar" id="bar" hidden><div class="sum" id="sum">還沒有點任何商品</div><button class="btn ghost" id="clr" hidden>清空</button><button class="btn" id="go" disabled>結帳</button></div>
+
+<dialog id="dlg"><div class="dlg">
+  <h3>結帳 <button type="button" id="x" aria-label="關閉">×</button></h3>
+  <div id="lines"></div>
+  <div class="tot"><span>應收金額</span><b id="grand"></b></div>
+  <div class="pay" id="payBox" role="radiogroup" aria-label="付款方式">
+    <label><input type="radio" name="pay" value="現金" checked><span>現金</span></label>
+    <label><input type="radio" name="pay" value="轉帳"><span>轉帳</span></label>
+    <label><input type="radio" name="pay" value="LINE Pay"><span>LINE Pay</span></label>
+  </div>
+  <div class="cash" id="cash">
+    <div class="row">收現金 <input id="recv" inputmode="numeric" placeholder="0">
+      <button class="btn ghost sm" data-r="exact">剛好</button><button class="btn ghost sm" data-r="1000">$1,000</button><button class="btn ghost sm" data-r="2000">$2,000</button><button class="btn ghost sm" data-r="3000">$3,000</button></div>
+    <div class="chg" id="chg">找零 <b>—</b></div>
+  </div>
+  <div class="acts" style="margin-top:0"><button class="btn" id="done" style="flex:1">完成收款</button></div>
+</div></dialog>
+
+<script>
+const ITEMS=[
+ {id:"g1",n:"雙子座黑",s:"中焙",z:"A",v:600},
+ {id:"g2",n:"雙子座白",z:"A",v:600},
+ {id:"mt",n:"桃太郎",z:"A",v:600},
+ {id:"dn",n:"酒神祭",z:"A",v:600},
+ {id:"ar",n:"阿緹蜜絲",z:"B",v:700},
+ {id:"yl",n:"月老",z:"B",v:700},
+ {id:"cp",n:"邱比特",z:"B",v:700},
+ {id:"yh",n:"玉環",s:"淺中焙",z:"B",v:700},
+ {id:"oc",n:"十月的窗邊",s:"120g 限定",z:"B",v:700},
+ {id:"jn",n:"六月的水色",s:"120g 限定",z:"B",v:700},
+ {id:"sz",n:"三藏",s:"單品・不算組合",z:"O",v:700},
+ {id:"dr",n:"展場特調",s:"一杯",z:"O",v:200,nostock:1},
+ {id:"rd",n:"兌換贈送特調",s:"客人來換送的那杯",z:"O",v:0,nostock:1}];
+const GIFT={id:"cup",n:"「宮」玻璃杯（贈品）"};
+const I={};ITEMS.forEach(x=>I[x.id]=x);
+/* ===== 資料：每個動作都記成一筆「紀錄」，各手機互相同步紀錄，再算出訂單和庫存 ===== */
+const SYNC_URL="https://script.google.com/macros/s/AKfycbyoKp-q_LqWqEOCdQpPjr1boTcZRNSQkOrn_33-xe_4zrggtrifM5FWP3_gXRMxAVo/exec";  /* Google 同步網址 */
+const KEY="mixPOS-report";
+let st={events:[],sent:{},dev:"",seq:0,url:""};
+try{const o=JSON.parse(localStorage.getItem(KEY)||"null");if(o&&o.events)st=o}catch(e){}
+if(!st.dev)st.dev="報表";if(!st.dev)st.dev="手機"+Math.random().toString(36).slice(2,4).toUpperCase();
+if(!st.url&&SYNC_URL)st.url=SYNC_URL;
+const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){alert("儲存失敗：請不要用無痕模式")}};
+let db={stock:{},orders:[],restock:[]};
+function rebuild(){
+  db={stock:{},orders:[],restock:[]};
+  const ev=[...st.events].sort((a,b)=>a.t-b.t||(a.id<b.id?-1:1));
+  for(const e of ev){const day=dayOf(new Date(e.t)),d=e.data||{};
+    if(e.type==="stock")Object.assign(db.stock,d);
+    else if(e.type==="order")db.orders.push({...d,oid:e.id,t:e.t,day,dev:e.dev});
+    else if(e.type==="void"){const o=db.orders.find(o=>o.oid===d.oid);if(o)o.void=!!d.v}
+    else if(e.type==="restock")db.restock.push({...d,rid:e.id,t:e.t,day});
+    else if(e.type==="unrestock"){const r=db.restock.find(r=>r.rid===d.rid);if(r)r.void=1}
+    else if(e.type==="reset"){db.orders=[];db.restock=[]}}
+}
+function emit(type,data){st.events.push({id:st.dev+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),t:Date.now(),dev:st.dev,type,data});persist();rebuild();drawSync();sync()}
+/* 同步 */
+let syncing=false,again=false,lastOk=0,syncErr="";
+async function sync(){
+  if(!st.url){drawSync();return}
+  if(syncing){again=true;return}
+  syncing=true;
+  try{
+    const pend=st.events.filter(e=>!st.sent[e.id]);
+    if(pend.length){const r=await fetch(st.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({events:pend})});const j=await r.json();if(!j.ok)throw 0;pend.forEach(e=>st.sent[e.id]=1)}
+    const r2=await fetch(st.url+(st.url.includes("?")?"&":"?")+"t="+Date.now());const j2=await r2.json();
+    const known=new Set(st.events.map(e=>e.id));let ch=0;
+    (j2.events||[]).forEach(e=>{if(!known.has(e.id)){st.events.push(e);ch++}st.sent[e.id]=1});
+    persist();lastOk=Date.now();syncErr="";
+    if(ch){rebuild();redraw()}
+  }catch(x){syncErr="連不上"}
+  syncing=false;drawSync();
+  if(again){again=false;sync()}
+}
+function drawSync(){
+  const el=document.getElementById("sync");if(!el)return;
+  const pend=st.events.filter(e=>!st.sent[e.id]).length,tm=lastOk?`${p2(new Date(lastOk).getHours())}:${p2(new Date(lastOk).getMinutes())}`:"";
+  let c,t;
+  if(!st.url){c="#999";t="單機模式（還沒設定同步）"}
+  else if(syncErr){c="var(--cherry)";t=`沒有連線，${pend?pend+" 筆先存在手機，":""}有網路會自動補傳`}
+  else if(pend){c="#d08a00";t=`上傳中…（${pend} 筆）`}
+  else{c="var(--leaf)";t=lastOk?`已同步 ${tm}`:"同步中…"}
+  el.innerHTML=`<i style="background:${c}"></i>${esc(st.dev)}・${t}`;
+}
+function redraw(){const p=tabs.find(t=>t.getAttribute("aria-selected")==="true").dataset.p;
+  if(p==="stock"&&document.activeElement&&document.activeElement.matches(".stockin"))return;
+  ({sell:drawSell,stat:drawStat,stock:drawStock,list:drawList,set:drawSet})[p]()}
+const fmt=n=>"$"+n.toLocaleString("en-US");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const p2=x=>String(x).padStart(2,"0");
+const dayOf=d=>`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
+const dayLabel=k=>{const [y,m,d]=k.split("-");return `${+m}/${+d}（${"日一二三四五六"[new Date(+y,+m-1,+d).getDay()]}）`};
+
+/* 已賣（含送出）數量 */
+function used(id,day){let n=0;db.orders.forEach(o=>{if(o.void||(day&&o.day!==day))return;n+=(o.items[id]||0)+(id==="cup"?o.gift:0)});return n}
+const added=id=>db.restock.filter(r=>!r.void&&r.id===id).reduce((a,r)=>a+r.q,0);
+const left=id=>(db.stock[id]||0)+added(id)-used(id);
+
+/* 購物車 */
+let cart={};
+function calc(c){
+  let a=0,b=0,sub=0;
+  for(const k in c){const x=I[k];sub+=x.v*c[k];if(x.z==="A")a+=c[k];if(x.z==="B")b+=c[k]}
+  const pairs=Math.floor((a+b)/2),off=pairs*100,total=sub-off;
+  return {sub,pairs,off,total,gift:total>=3000?1:0,n:Object.values(c).reduce((s,v)=>s+v,0)};
+}
+function btnHTML(x){
+  const q=cart[x.id]||0,l=x.nostock?null:left(x.id)-q,out=!x.nostock&&left(x.id)<=0;
+  return `<button class="p ${x.z.toLowerCase()}" data-id="${x.id}"${out?" disabled":""}>
+    <b>${esc(x.n)}</b><span class="st">${esc(x.s||"")}</span>
+    <span class="pr">${x.v?fmt(x.v):"免費兌換"}</span>
+    ${x.nostock?"":`<span class="st${l<=3?" low":""}">${out?"售完":"剩 "+l}</span>`}
+    ${q?`<span class="n">${q}</span>`:""}</button>`;
+}
+function drawSell(){
+  document.getElementById("noStock").hidden=ITEMS.some(x=>!x.nostock&&db.stock[x.id]>0);
+  ["A","B","O"].forEach(z=>document.getElementById("g"+z).innerHTML=ITEMS.filter(x=>x.z===z).map(btnHTML).join(""));
+  const r=calc(cart);
+  document.getElementById("sum").innerHTML=r.n?`${r.n} 件　<b>${fmt(r.total)}</b><br><small>${r.pairs?`組合 ${r.pairs} 組（−${fmt(r.off)}）・送特調 ${r.pairs} 杯`:"豆子兩包就成一組"}${r.gift?"・送宮杯":""}</small>`:"還沒有點任何商品";
+  document.getElementById("go").disabled=!r.n;document.getElementById("clr").hidden=!r.n;
+}
+document.addEventListener("click",e=>{
+  const b=e.target.closest(".p");if(!b||b.disabled)return;
+  const x=I[b.dataset.id],q=(cart[x.id]||0)+1;
+  if(!x.nostock&&q>left(x.id)){toast("庫存不夠了",1);return}
+  cart[x.id]=q;drawSell();
+});
+document.getElementById("clr").onclick=()=>{cart={};drawSell()};
+
+/* 結帳視窗 */
+const dlg=document.getElementById("dlg");
+function drawDlg(){
+  const r=calc(cart);
+  document.getElementById("lines").innerHTML=ITEMS.filter(x=>cart[x.id]).map(x=>`<div class="ln"><span class="nm">${esc(x.n)}<small>${fmt(x.v)} × ${cart[x.id]}</small></span><span class="qty" data-id="${x.id}"><button data-d="-1">−</button><span>${cart[x.id]}</span><button data-d="1">＋</button></span><span class="amt">${fmt(x.v*cart[x.id])}</span></div>`).join("")
+   +(r.pairs?`<div class="ln disc"><span class="nm">組合優惠 ${r.pairs} 組</span><span class="amt">−${fmt(r.off)}</span></div><div class="ln gift"><span class="nm">送展場特調 × ${r.pairs} 杯</span></div>`:"")
+   +(r.gift?`<div class="ln gift"><span class="nm">送「宮」玻璃杯 × 1${left("cup")<=0&&db.stock.cup?"（宮杯沒庫存了）":""}</span></div>`:"");
+  document.getElementById("grand").textContent=fmt(r.total);
+  const free=r.total===0;document.getElementById("payBox").hidden=free;document.getElementById("cash").hidden=free||document.querySelector("input[name=pay]:checked").value!=="現金";
+  chg();
+}
+function chg(){const r=calc(cart),v=+document.getElementById("recv").value.replace(/\D/g,"")||0;
+  document.getElementById("chg").innerHTML=v?(v>=r.total?`找零 <b>${fmt(v-r.total)}</b>`:`<span style="color:var(--cherry)">還差 ${fmt(r.total-v)}</span>`):"找零 <b>—</b>"}
+document.getElementById("go").onclick=()=>{document.getElementById("recv").value="";drawDlg();dlg.showModal()};
+document.getElementById("x").onclick=()=>dlg.close();
+dlg.addEventListener("close",drawSell);
+document.getElementById("lines").addEventListener("click",e=>{
+  const b=e.target.closest("[data-d]");if(!b)return;const id=b.parentElement.dataset.id,x=I[id];
+  let q=(cart[id]||0)+(+b.dataset.d);
+  if(!x.nostock&&q>left(id)){toast("庫存不夠了",1);return}
+  if(q<=0)delete cart[id];else cart[id]=q;
+  if(!Object.keys(cart).length){dlg.close();return}
+  drawDlg();
+});
+document.getElementById("recv").addEventListener("input",chg);
+document.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{const r=calc(cart);document.getElementById("recv").value=b.dataset.r==="exact"?r.total:b.dataset.r;chg()});
+document.querySelectorAll("input[name=pay]").forEach(r=>r.onchange=()=>{document.getElementById("cash").hidden=r.value!=="現金"&&r.checked});
+document.getElementById("done").onclick=()=>{
+  const r=calc(cart);if(!r.n)return;
+  const pay=r.total===0?"免付款":document.querySelector("input[name=pay]:checked").value;
+  if(pay==="現金"){const v=+document.getElementById("recv").value.replace(/\D/g,"")||0;if(v&&v<r.total){toast("收的錢不夠",1);return}}
+  st.seq=(st.seq||0)+1;const no=st.dev+"-"+st.seq;
+  emit("order",{no,items:{...cart},sub:r.sub,off:r.off,total:r.total,pairs:r.pairs,gift:r.gift,pay});
+  cart={};dlg.close();
+  document.querySelector("input[name=pay][value=現金]").checked=true;document.getElementById("cash").hidden=false;
+  toast(`#${no} 完成 ${fmt(r.total)}`);drawSell();
+};
+
+/* 每日統計 */
+let selDay=null;
+function days(){const s=new Set(db.orders.map(o=>o.day));s.add(dayOf(new Date()));return [...s].sort()}
+function drawStat(){
+  const ds=days();if(!selDay||(selDay!=="all"&&!ds.includes(selDay)))selDay=dayOf(new Date());
+  document.getElementById("days").innerHTML=ds.map(d=>`<button data-day="${d}" class="${d===selDay?"on":""}">${dayLabel(d)}</button>`).join("")+`<button data-day="all" class="${selDay==="all"?"on":""}">全部合計</button>`;
+  const os=db.orders.filter(o=>!o.void&&(selDay==="all"||o.day===selDay));
+  const sum=f=>os.reduce((a,o)=>a+f(o),0),byPay=p=>sum(o=>o.pay===p?o.total:0);
+  document.getElementById("kpi").innerHTML=[
+   ["營業額",fmt(sum(o=>o.total))],["訂單數",os.length+" 筆"],["現金",fmt(byPay("現金"))],["轉帳",fmt(byPay("轉帳"))],["LINE Pay",fmt(byPay("LINE Pay"))],
+   ["組合數",sum(o=>o.pairs)+" 組"],["送出特調",sum(o=>o.pairs)+" 杯"],["兌換特調",sum(o=>o.items.rd||0)+" 杯"],["送出宮杯",sum(o=>o.gift)+" 個"]].map(([a,b])=>`<div><small>${a}</small><b>${b}</b></div>`).join("");
+  const d=selDay==="all"?null:selDay;
+  const rows=ITEMS.map(x=>{const q=used(x.id,d);return `<tr><td>${esc(x.n)}</td><td class="${q?"":"zero"}">${q}</td><td class="${q?"":"zero"}">${fmt(q*x.v)}</td><td${!x.nostock&&left(x.id)<=3?' class="low"':""}>${x.nostock?"—":left(x.id)}</td></tr>`}).join("");
+  const tq=ITEMS.filter(x=>!x.nostock).reduce((a,x)=>a+used(x.id,d),0);
+  document.getElementById("stbl").innerHTML=`<thead><tr><th>品項</th><th>數量</th><th>金額</th><th>剩下</th></tr></thead><tbody>${rows}
+   <tr><td>${esc(GIFT.n)}</td><td>${used("cup",d)}</td><td>—</td><td>${db.stock.cup?left("cup"):"—"}</td></tr>
+   <tr class="sumrow"><td>咖啡豆合計</td><td>${tq} 包</td><td></td><td></td></tr></tbody>`;
+}
+document.getElementById("days").addEventListener("click",e=>{const b=e.target.closest("[data-day]");if(b){selDay=b.dataset.day;drawStat()}});
+document.getElementById("csv").onclick=()=>{
+  const head=["編號","日期","時間","品項","原價","組合折扣","實收","付款方式","組合數","送特調","送宮杯","狀態"];
+  const rows=db.orders.map(o=>{const d=new Date(o.t);return [o.no,o.day,p2(d.getHours())+":"+p2(d.getMinutes()),Object.keys(o.items).map(k=>I[k].n+"×"+o.items[k]).join("、"),o.sub,o.off,o.total,o.pay,o.pairs,o.pairs,o.gift,o.void?"已作廢":""]});
+  const csv="﻿"+[head,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\r\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download=`展場訂單_${dayOf(new Date())}.csv`;a.click();
+};
+
+/* 庫存 */
+function drawStock(){
+  const all=ITEMS.filter(x=>!x.nostock).concat([GIFT]);
+  document.getElementById("ktbl").innerHTML=`<thead><tr><th>品項</th><th>一開始帶來</th><th>補貨</th><th>已用</th><th>剩下</th></tr></thead><tbody>${all.map(x=>{const l=left(x.id);return `<tr><td>${esc(x.n)}<br><button class="btn leaf sm" data-add="${x.id}" style="margin-top:4px">＋補貨</button></td><td><input class="stockin" inputmode="numeric" data-id="${x.id}" value="${db.stock[x.id]||0}"></td><td class="${added(x.id)?"":"zero"}">${added(x.id)}</td><td>${used(x.id)}</td><td class="${l<=3?"low":""}">${l}</td></tr>`}).join("")}</tbody>`;
+  const rs=[...db.restock].reverse();
+  document.getElementById("rlist").innerHTML=rs.length?`<table><thead><tr><th>時間</th><th>品項</th><th>補了</th><th></th></tr></thead><tbody>${rs.map(r=>{const d=new Date(r.t);return `<tr${r.void?' style="opacity:.45"':""}><td>${dayLabel(r.day)} ${p2(d.getHours())}:${p2(d.getMinutes())}</td><td>${esc((I[r.id]||GIFT).n)}</td><td>${r.void?"已取消":"+"+r.q}</td><td>${r.void?"":`<button class="btn ghost sm" data-unadd="${r.rid}">取消</button>`}</td></tr>`}).join("")}</tbody></table>`:'<p class="note">還沒有補貨紀錄</p>';
+}
+document.getElementById("p-stock").addEventListener("click",e=>{
+  const a=e.target.closest("[data-add]"),u=e.target.closest("[data-unadd]");
+  if(a){const x=I[a.dataset.add]||GIFT,v=prompt(`「${x.n}」補了幾包？`,"");if(v===null)return;const q=+String(v).replace(/\D/g,"");
+    if(!q){toast("請輸入數字",1);return}
+    emit("restock",{id:x.id,q});drawStock();toast(`${x.n} 補貨 +${q}`)}
+  if(u){const r=db.restock.find(r=>r.rid===u.dataset.unadd);if(r&&confirm(`確定要取消這筆補貨（${(I[r.id]||GIFT).n} +${r.q}）嗎？`)){emit("unrestock",{rid:r.rid});drawStock()}}
+});
+document.getElementById("saveStock").onclick=()=>{
+  const ch={};document.querySelectorAll(".stockin").forEach(i=>{const v=Math.max(0,+i.value.replace(/\D/g,"")||0);if(v!==(db.stock[i.dataset.id]||0))ch[i.dataset.id]=v});
+  if(Object.keys(ch).length)emit("stock",ch);drawStock();toast("庫存已儲存");
+};
+
+/* 訂單紀錄 */
+function drawList(){
+  const os=[...db.orders].reverse();
+  document.getElementById("olist").innerHTML=os.length?os.map(o=>{const d=new Date(o.t);return `<div class="order${o.void?" void":""}"><div class="hd"><b>#${o.no}</b><span class="t">${dayLabel(o.day)} ${p2(d.getHours())}:${p2(d.getMinutes())}</span><span class="tag">${esc(o.pay)}</span>${o.void?'<span class="tag v">已作廢</span>':""}<span class="sp"></span><b>${fmt(o.total)}</b></div>
+   <div class="it">${Object.keys(o.items).map(k=>esc(I[k].n)+" ×"+o.items[k]).join("、")}${o.pairs?`<br><small class="note">組合 ${o.pairs} 組 −${fmt(o.off)}・送特調 ${o.pairs} 杯</small>`:""}${o.gift?'<small class="note">・送宮杯</small>':""}</div>
+   <div><button class="btn ghost sm" data-void="${o.oid}">${o.void?"恢復這筆":"作廢這筆（打錯時用）"}</button></div></div>`}).join(""):`<p class="empty">還沒有訂單</p>`;
+}
+document.getElementById("olist").addEventListener("click",e=>{const b=e.target.closest("[data-void]");if(!b)return;const o=db.orders.find(x=>x.oid===b.dataset.void);
+  if(!o.void&&!confirm(`確定要作廢第 ${o.no} 筆（${fmt(o.total)}）嗎？庫存會加回去。`))return;emit("void",{oid:o.oid,v:!o.void});drawList()});
+document.getElementById("wipe").onclick=()=>{if(!db.orders.length)return;if(confirm("確定要清除全部訂單和補貨紀錄嗎？每支連線的手機都會一起清掉。\n（一開始帶來的數量會保留）")&&confirm("真的要清除嗎？請再確認一次。")){emit("reset",{});drawList();toast("已清除全部訂單（每支手機都會清掉）")}};
+
+/* 分頁、提示 */
+const tabs=[...document.querySelectorAll("[role=tab]")];
+function drawSet(){document.getElementById("devName").value=st.dev;document.getElementById("syncUrl").value=st.url||"";drawSync()}
+document.getElementById("saveSet").onclick=()=>{const n=document.getElementById("devName").value.trim().replace(/[-\s]/g,"");if(n)st.dev=n;st.url=document.getElementById("syncUrl").value.trim();persist();drawSync();toast("已儲存");sync()};
+document.getElementById("syncNow").onclick=()=>{sync();toast("同步中…")};
+function show(p){tabs.forEach(t=>{const on=t.dataset.p===p;t.setAttribute("aria-selected",on);document.getElementById("p-"+t.dataset.p).hidden=!on});
+  document.getElementById("bar").hidden=p!=="sell";document.body.style.paddingBottom=p==="sell"?"96px":"20px";
+  ({sell:drawSell,stat:drawStat,stock:drawStock,list:drawList,set:drawSet})[p]();scrollTo(0,0)}
+tabs.forEach(t=>t.onclick=()=>show(t.dataset.p));
+let tt;function toast(m,bad){let el=document.querySelector(".toast");if(!el){el=document.createElement("div");el.className="toast";document.body.append(el)}el.textContent=m;el.style.background=bad?"var(--cherry)":"var(--leaf)";el.hidden=false;clearTimeout(tt);tt=setTimeout(()=>el.hidden=true,1800)}
+const td=new Date();document.getElementById("today").textContent="今天 "+dayLabel(dayOf(td));
+rebuild();drawSync();show("stat");sync();
+setInterval(sync,15000);
+window.addEventListener("online",sync);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)sync()});
+</script>

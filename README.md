@@ -12,3 +12,9 @@
 多支手機會透過 Google 試算表「MixCoffee 展場收銀紀錄」自動同步。
 
 網址：https://qasdfgb-design.github.io/mixcoffee-member/pos.html
+
+## 營收報表（report.html）
+
+只給老闆看的每日營收、庫存、訂單紀錄（收銀頁不顯示營收）。
+
+網址：https://qasdfgb-design.github.io/mixcoffee-member/report.html
