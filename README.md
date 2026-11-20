@@ -5,3 +5,10 @@
 網址：https://qasdfgb-design.github.io/mixcoffee-member/
 
 資料只存在使用的那台手機上，請定期到頁面最下方「店家專區」下載 Excel 備份。
+
+## 展場收銀（pos.html）
+
+咖啡展用的收銀系統：點商品結帳、自動算組合價、記錄庫存和補貨、每日統計。
+多支手機會透過 Google 試算表「MixCoffee 展場收銀紀錄」自動同步。
+
+網址：https://qasdfgb-design.github.io/mixcoffee-member/pos.html
