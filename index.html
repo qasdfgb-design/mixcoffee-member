@@ -133,7 +133,7 @@ $('fm').onsubmit=e=>{e.preventDefault();
  if(bad.length){(bad[0]==='bd'?$('by'):$(bad[0])).focus();return}
  const p2=n=>String(n).padStart(2,'0');const t=new Date();
  const a=load();a.push({time:t.getFullYear()+'/'+p2(t.getMonth()+1)+'/'+p2(t.getDate())+' '+p2(t.getHours())+':'+p2(t.getMinutes()),
-  name,phone:phone.slice(0,4)+'-'+phone.slice(4,7)+'-'+phone.slice(7),card,birthday:y+'/'+p2(m)+'/'+p2(d),
+  name,phone,card,birthday:y+'/'+p2(m)+'/'+p2(d),
   id:devId+'-'+t.getTime().toString(36)+Math.random().toString(36).slice(2,6)});save(a);upload();
  $('doneName').textContent=name+' 您好，資料已經收到了';show('doneCard');};
 function reset(){$('fm').reset();fillDays();document.querySelectorAll('.f').forEach(f=>f.classList.remove('bad'))}
