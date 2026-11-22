@@ -4,7 +4,7 @@
 
 網址：https://qasdfgb-design.github.io/mixcoffee-member/
 
-每筆資料會自動上傳到 Google 試算表「MixCoffee 展場收銀紀錄」的「會員資料」頁；沒網路時先存在手機，有網路再自動補傳。
+每筆資料會自動上傳到 Google 試算表「MixCoffee 展場收銀紀錄」的「會員資料」頁；沒網路時先存在手機，有網路再自動補傳，上傳成功後就從手機刪掉。查看會員資料請直接打開該試算表（頁面上沒有店家專區）。
 
 ## 展場收銀（pos.html）
 
