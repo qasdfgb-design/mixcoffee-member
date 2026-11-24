@@ -359,7 +359,7 @@ function drawStock(){
   const all=ITEMS.filter(x=>!x.nostock).concat([GIFT]);
   document.getElementById("ktbl").innerHTML=`<thead><tr><th>品項</th><th>一開始帶來</th><th>補貨</th><th>已用</th><th>剩下</th></tr></thead><tbody>${all.map(x=>{const l=left(x.id);return `<tr><td>${esc(x.n)}<br><button class="btn leaf sm" data-add="${x.id}" style="margin-top:4px">＋補貨</button></td><td><input class="stockin" inputmode="numeric" data-id="${x.id}" value="${db.stock[x.id]||0}"></td><td class="${added(x.id)?"":"zero"}">${added(x.id)}</td><td>${used(x.id)}</td><td class="${l<=3?"low":""}">${l}</td></tr>`}).join("")}</tbody>`;
   const rs=[...db.restock].reverse();
-  document.getElementById("rlist").innerHTML=rs.length?`<table><thead><tr><th>時間</th><th>品項</th><th>補了</th><th></th></tr></thead><tbody>${rs.map(r=>{const d=new Date(r.t);return `<tr${r.void?' style="opacity:.45"':""}><td>${dayLabel(r.day)} ${p2(d.getHours())}:${p2(d.getMinutes())}</td><td>${esc((I[r.id]||GIFT).n)}</td><td>${r.void?"已取消":"+"+r.q}</td><td>${r.void?"":`<button class="btn ghost sm" data-unadd="${r.rid}">取消</button>`}</td></tr>`}).join("")}</tbody></table>`:'<p class="note">還沒有補貨紀錄</p>';
+  document.getElementById("rlist").innerHTML=rs.length?`<table><thead><tr><th>時間</th><th>品項</th><th>補了</th></tr></thead><tbody>${rs.map(r=>{const d=new Date(r.t);return `<tr${r.void?' style="opacity:.45"':""}><td>${dayLabel(r.day)} ${p2(d.getHours())}:${p2(d.getMinutes())}</td><td>${esc((I[r.id]||GIFT).n)}</td><td>${r.void?"已取消":"+"+r.q}</td></tr>`}).join("")}</tbody></table>`:'<p class="note">還沒有補貨紀錄</p>';
 }
 document.getElementById("p-stock").addEventListener("click",e=>{
   const a=e.target.closest("[data-add]"),u=e.target.closest("[data-unadd]");
