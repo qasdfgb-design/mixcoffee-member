@@ -121,7 +121,7 @@ th{white-space:nowrap}.btn.sm{white-space:nowrap}
   </div>
 
   <section id="p-sell">
-    <p class="note" id="noStock" hidden style="background:#fff3c4;color:#6b4a00;padding:10px 12px;border-radius:10px;font-size:14px">還沒有填庫存，豆子都會顯示「售完」。請先到上面的「庫存」分頁，填好每款帶來的數量。</p>
+    <p class="note" id="noStock" hidden style="background:#fff3c4;color:#6b4a00;padding:10px 12px;border-radius:10px;font-size:14px">還沒有填庫存，豆子都會顯示「售完」。請到上面的「庫存」分頁，按「＋補貨」填入數量。</p>
     <h2><span class="z" style="color:var(--yat)">A</span> 區　<small class="note">一包 $600</small></h2>
     <div class="grid" id="gA"></div>
     <h2><span class="z" style="color:var(--pk)">B</span> 區　<small class="note">一包 $700</small></h2>
@@ -139,9 +139,8 @@ th{white-space:nowrap}.btn.sm{white-space:nowrap}
   </section>
 
   <section id="p-stock" hidden>
-    <p class="note">「一開始帶來」填第一天帶到展場的數量。之後有補貨，按那一行的「＋補貨」輸入補了幾包就好，「剩下」會自動加上去。</p>
+    <p class="note">有補貨時，按那一行的「＋補貨」輸入補了幾包就好，「剩下」會自動加上去。數量要更正的話，請聯絡管理者修改。</p>
     <table id="ktbl" style="margin-top:8px"></table>
-    <div class="acts"><button class="btn" id="saveStock">儲存「一開始帶來」</button></div>
     <h2>補貨紀錄</h2><div id="rlist"></div>
   </section>
 
@@ -357,7 +356,7 @@ document.getElementById("csv").onclick=()=>{
 /* 庫存 */
 function drawStock(){
   const all=ITEMS.filter(x=>!x.nostock).concat([GIFT]);
-  document.getElementById("ktbl").innerHTML=`<thead><tr><th>品項</th><th>一開始帶來</th><th>補貨</th><th>已用</th><th>剩下</th></tr></thead><tbody>${all.map(x=>{const l=left(x.id);return `<tr><td>${esc(x.n)}<br><button class="btn leaf sm" data-add="${x.id}" style="margin-top:4px">＋補貨</button></td><td><input class="stockin" inputmode="numeric" data-id="${x.id}" value="${db.stock[x.id]||0}"></td><td class="${added(x.id)?"":"zero"}">${added(x.id)}</td><td>${used(x.id)}</td><td class="${l<=3?"low":""}">${l}</td></tr>`}).join("")}</tbody>`;
+  document.getElementById("ktbl").innerHTML=`<thead><tr><th>品項</th><th>一開始帶來</th><th>補貨</th><th>已用</th><th>剩下</th></tr></thead><tbody>${all.map(x=>{const l=left(x.id);return `<tr><td>${esc(x.n)}<br><button class="btn leaf sm" data-add="${x.id}" style="margin-top:4px">＋補貨</button></td><td class="${db.stock[x.id]?"":"zero"}">${db.stock[x.id]||0}</td><td class="${added(x.id)?"":"zero"}">${added(x.id)}</td><td>${used(x.id)}</td><td class="${l<=3?"low":""}">${l}</td></tr>`}).join("")}</tbody>`;
   const rs=[...db.restock].reverse();
   document.getElementById("rlist").innerHTML=rs.length?`<table><thead><tr><th>時間</th><th>品項</th><th>補了</th></tr></thead><tbody>${rs.map(r=>{const d=new Date(r.t);return `<tr${r.void?' style="opacity:.45"':""}><td>${dayLabel(r.day)} ${p2(d.getHours())}:${p2(d.getMinutes())}</td><td>${esc((I[r.id]||GIFT).n)}</td><td>${r.void?"已取消":"+"+r.q}</td></tr>`}).join("")}</tbody></table>`:'<p class="note">還沒有補貨紀錄</p>';
 }
@@ -368,10 +367,6 @@ document.getElementById("p-stock").addEventListener("click",e=>{
     emit("restock",{id:x.id,q});drawStock();toast(`${x.n} 補貨 +${q}`)}
   if(u){const r=db.restock.find(r=>r.rid===u.dataset.unadd);if(r&&confirm(`確定要取消這筆補貨（${(I[r.id]||GIFT).n} +${r.q}）嗎？`)){emit("unrestock",{rid:r.rid});drawStock()}}
 });
-document.getElementById("saveStock").onclick=()=>{
-  const ch={};document.querySelectorAll(".stockin").forEach(i=>{const v=Math.max(0,+i.value.replace(/\D/g,"")||0);if(v!==(db.stock[i.dataset.id]||0))ch[i.dataset.id]=v});
-  if(Object.keys(ch).length)emit("stock",ch);drawStock();toast("庫存已儲存");
-};
 
 /* 訂單紀錄 */
 function drawList(){
