@@ -163,6 +163,10 @@ th{white-space:nowrap}.btn.sm{white-space:nowrap}
 
 <div class="bar" id="bar"><div class="sum" id="sum">還沒有點任何商品</div><button class="btn ghost" id="clr" hidden>清空</button><button class="btn" id="go" disabled>結帳</button></div>
 
+<dialog id="tdlg"><div class="dlg">
+  <h3><span id="tname"></span> <button type="button" id="tx" aria-label="關閉">×</button></h3>
+  <div class="acts" style="margin-top:0"><button class="btn" id="tsell" style="flex:1">販售 $700</button><button class="btn leaf" id="tgive" style="flex:1">贈送 $0</button></div>
+</div></dialog>
 <dialog id="dlg"><div class="dlg">
   <h3>結帳 <button type="button" id="x" aria-label="關閉">×</button></h3>
   <div id="lines"></div>
@@ -199,6 +203,7 @@ const ITEMS=[
  {id:"T恤L",n:"九週年 T 恤 L",s:"",z:"T",v:700},
  {id:"T恤XL",n:"九週年 T 恤 XL",s:"",z:"T",v:700},
  {id:"T恤2XL",n:"九週年 T 恤 2XL",s:"",z:"T",v:700}];
+["M","L","XL","2XL"].forEach(z=>ITEMS.push({id:"T恤"+z+"贈",n:"九週年 T 恤 "+z+"（贈送）",s:"",z:"TG",v:0,of:"T恤"+z,hidden:1}));
 const GIFT={id:"cup",n:"「宮」玻璃杯（贈品）"};
 const I={};ITEMS.forEach(x=>I[x.id]=x);
 /* ===== 資料：每個動作都記成一筆「紀錄」，各手機互相同步紀錄，再算出訂單和庫存 ===== */
@@ -260,7 +265,9 @@ const dayOf=d=>`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
 const dayLabel=k=>{const [y,m,d]=k.split("-");return `${+m}/${+d}（${"日一二三四五六"[new Date(+y,+m-1,+d).getDay()]}）`};
 
 /* 已賣（含送出）數量 */
-function used(id,day){let n=0;db.orders.forEach(o=>{if(o.void||(day&&o.day!==day))return;n+=(o.items[id]||0)+(id==="cup"?o.gift:0)});return n}
+function used(id,day,only){let n=0;db.orders.forEach(o=>{if(o.void||(day&&o.day!==day))return;for(const k in o.items)if(k===id||(!only&&I[k]&&I[k].of===id))n+=o.items[k];if(id==="cup")n+=o.gift});return n}
+const baseOf=id=>(I[id]&&I[id].of)||id;
+const inCart=b=>Object.keys(cart).reduce((a,k)=>a+(baseOf(k)===b?cart[k]:0),0);
 const added=id=>db.restock.filter(r=>!r.void&&r.id===id).reduce((a,r)=>a+r.q,0);
 const left=id=>(db.stock[id]||0)+added(id)-used(id);
 
@@ -273,7 +280,7 @@ function calc(c){
   return {sub,pairs,off,total,gift:total>=3000?1:0,n:Object.values(c).reduce((s,v)=>s+v,0)};
 }
 function btnHTML(x){
-  const q=cart[x.id]||0,l=x.nostock?null:left(x.id)-q,out=!x.nostock&&left(x.id)<=0;
+  const q=inCart(x.id),l=x.nostock?null:left(x.id)-q,out=!x.nostock&&left(x.id)<=0;
   return `<button class="p ${x.z.toLowerCase()}" data-id="${x.id}"${out?" disabled":""}>
     <b>${esc(x.n)}</b><span class="st">${esc(x.s||"")}</span>
     <span class="pr">${x.v?fmt(x.v):"免費兌換"}</span>
@@ -282,19 +289,26 @@ function btnHTML(x){
 }
 function drawSell(){
   document.getElementById("noStock").hidden=ITEMS.some(x=>!x.nostock&&db.stock[x.id]>0);
-  ["A","B","O","T"].forEach(z=>document.getElementById("g"+z).innerHTML=ITEMS.filter(x=>x.z===z).map(btnHTML).join(""));
+  ["A","B","O","T"].forEach(z=>document.getElementById("g"+z).innerHTML=ITEMS.filter(x=>x.z===z&&!x.hidden).map(btnHTML).join(""));
   const r=calc(cart);
   document.getElementById("sum").innerHTML=r.n?`${r.n} 件　<b>${fmt(r.total)}</b><br><small>${r.pairs?`組合 ${r.pairs} 組（−${fmt(r.off)}）・送特調 ${r.pairs} 杯`:"豆子兩包就成一組"}${r.gift?"・送宮杯":""}</small>`:"還沒有點任何商品";
   document.getElementById("go").disabled=!r.n;document.getElementById("clr").hidden=!r.n;
 }
 document.addEventListener("click",e=>{
   const b=e.target.closest(".p");if(!b||b.disabled)return;
-  const x=I[b.dataset.id],q=(cart[x.id]||0)+1;
-  if(!x.nostock&&q>left(x.id)){toast("庫存不夠了",1);return}
-  cart[x.id]=q;drawSell();
+  const x=I[b.dataset.id];
+  if(inCart(x.id)+1>left(x.id)&&!x.nostock){toast("庫存不夠了",1);return}
+  if(x.z==="T"){openT(x);return}
+  cart[x.id]=(cart[x.id]||0)+1;drawSell();
 });
 document.getElementById("clr").onclick=()=>{cart={};drawSell()};
 
+/* T 恤：販售或贈送 */
+const tdlg=document.getElementById("tdlg");let tcur=null;
+function openT(x){tcur=x;document.getElementById("tname").textContent=x.n;tdlg.showModal()}
+document.getElementById("tx").onclick=()=>tdlg.close();
+document.getElementById("tsell").onclick=()=>{cart[tcur.id]=(cart[tcur.id]||0)+1;tdlg.close();drawSell()};
+document.getElementById("tgive").onclick=()=>{const g=tcur.id+"贈";cart[g]=(cart[g]||0)+1;tdlg.close();drawSell();toast(tcur.n+" 贈送 +1")};
 /* 結帳視窗 */
 const dlg=document.getElementById("dlg");
 function drawDlg(){
@@ -314,7 +328,7 @@ dlg.addEventListener("close",drawSell);
 document.getElementById("lines").addEventListener("click",e=>{
   const b=e.target.closest("[data-d]");if(!b)return;const id=b.parentElement.dataset.id,x=I[id];
   let q=(cart[id]||0)+(+b.dataset.d);
-  if(!x.nostock&&q>left(id)){toast("庫存不夠了",1);return}
+  if(!x.nostock&&+b.dataset.d>0&&inCart(baseOf(id))+1>left(baseOf(id))){toast("庫存不夠了",1);return}
   if(q<=0)delete cart[id];else cart[id]=q;
   if(!Object.keys(cart).length){dlg.close();return}
   drawDlg();
@@ -345,7 +359,7 @@ function drawStat(){
    ["營業額",fmt(sum(o=>o.total))],["訂單數",os.length+" 筆"],["現金",fmt(byPay("現金"))],["轉帳",fmt(byPay("轉帳"))],["LINE Pay",fmt(byPay("LINE Pay"))],
    ["組合數",sum(o=>o.pairs)+" 組"],["送出特調",sum(o=>o.pairs)+" 杯"],["兌換特調",sum(o=>o.items.rd||0)+" 杯"],["送出宮杯",sum(o=>o.gift)+" 個"]].map(([a,b])=>`<div><small>${a}</small><b>${b}</b></div>`).join("");
   const d=selDay==="all"?null:selDay;
-  const rows=ITEMS.map(x=>{const q=used(x.id,d);return `<tr><td>${esc(x.n)}</td><td class="${q?"":"zero"}">${q}</td><td class="${q?"":"zero"}">${fmt(q*x.v)}</td><td${!x.nostock&&left(x.id)<=3?' class="low"':""}>${x.nostock?"—":left(x.id)}</td></tr>`}).join("");
+  const rows=ITEMS.map(x=>{const q=used(x.id,d,1);return `<tr><td>${esc(x.n)}</td><td class="${q?"":"zero"}">${q}</td><td class="${q?"":"zero"}">${fmt(q*x.v)}</td><td${!x.nostock&&left(x.id)<=3?' class="low"':""}>${x.nostock||x.hidden?"—":left(x.id)}</td></tr>`}).join("");
   const tq=ITEMS.filter(x=>!x.nostock&&x.z!=="T").reduce((a,x)=>a+used(x.id,d),0);
   document.getElementById("stbl").innerHTML=`<thead><tr><th>品項</th><th>數量</th><th>金額</th><th>剩下</th></tr></thead><tbody>${rows}
    <tr><td>${esc(GIFT.n)}</td><td>${used("cup",d)}</td><td>—</td><td>${db.stock.cup?left("cup"):"—"}</td></tr>
@@ -361,7 +375,7 @@ document.getElementById("csv").onclick=()=>{
 
 /* 庫存 */
 function drawStock(){
-  const all=ITEMS.filter(x=>!x.nostock).concat([GIFT]);
+  const all=ITEMS.filter(x=>!x.nostock&&!x.hidden).concat([GIFT]);
   document.getElementById("ktbl").innerHTML=`<thead><tr><th>品項</th><th>一開始帶來</th><th>補貨</th><th>已用</th><th>剩下</th></tr></thead><tbody>${all.map(x=>{const l=left(x.id);return `<tr><td>${esc(x.n)}<br><button class="btn leaf sm" data-add="${x.id}" style="margin-top:4px">＋補貨</button></td><td class="${db.stock[x.id]?"":"zero"}">${db.stock[x.id]||0}</td><td class="${added(x.id)?"":"zero"}">${added(x.id)}</td><td>${used(x.id)}</td><td class="${l<=3?"low":""}">${l}</td></tr>`}).join("")}</tbody>`;
   const rs=[...db.restock].reverse();
   document.getElementById("rlist").innerHTML=rs.length?`<table><thead><tr><th>時間</th><th>品項</th><th>補了</th></tr></thead><tbody>${rs.map(r=>{const d=new Date(r.t);return `<tr${r.void?' style="opacity:.45"':""}><td>${dayLabel(r.day)} ${p2(d.getHours())}:${p2(d.getMinutes())}</td><td>${esc((I[r.id]||GIFT).n)}</td><td>${r.void?"已取消":"+"+r.q}</td></tr>`}).join("")}</tbody></table>`:'<p class="note">還沒有補貨紀錄</p>';
