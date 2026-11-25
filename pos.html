@@ -34,7 +34,7 @@ h2 .z{font-family:var(--f-num);font-size:26px}
 .p{position:relative;font:inherit;text-align:left;border:1px solid var(--rule);border-radius:12px;background:var(--card);padding:12px 12px 10px;min-height:92px;display:grid;gap:2px;color:var(--ink);cursor:pointer;overflow:hidden;touch-action:manipulation}
 .p::before{content:"";position:absolute;inset:0 0 auto;height:6px;background:var(--c,var(--leaf))}
 .p[data-id=rd]{--c:var(--leaf)}.p[data-id=rd] .pr{font-family:var(--f-body);font-size:14px;color:var(--leaf)}
-.p.a{--c:var(--ya)}.p.b{--c:var(--pk)}.p.o{--c:var(--pu)}
+.p.a{--c:var(--ya)}.p.b{--c:var(--pk)}.p.o{--c:var(--pu)}.p.t{--c:var(--ink)}
 .p:active{transform:scale(.97)}
 .p b{font-size:17px;padding-top:2px}
 .p .pr{font-family:var(--f-num);font-weight:700;font-size:16px}
@@ -128,6 +128,8 @@ th{white-space:nowrap}.btn.sm{white-space:nowrap}
     <div class="grid" id="gB"></div>
     <h2>其他</h2>
     <div class="grid" id="gO"></div>
+    <h2>九週年紀念 T 恤　<small class="note">一件 $700・不算組合</small></h2>
+    <div class="grid" id="gT"></div>
     <p class="note" style="margin-top:12px">點一下商品就加一個。A、B 區豆子每兩包自動算組合價（每組 −$100、送特調一杯）；單筆滿 $3,000 自動送「宮」玻璃杯。客人拿送的特調來換時，點「兌換贈送特調」再結帳（$0），就會記錄換了幾杯。</p>
   </section>
 
@@ -190,9 +192,13 @@ const ITEMS=[
  {id:"yh",n:"玉環",s:"淺中焙",z:"B",v:700},
  {id:"oc",n:"十月的窗邊",s:"120g 限定",z:"B",v:700},
  {id:"jn",n:"六月的水色",s:"120g 限定",z:"B",v:700},
- {id:"sz",n:"三藏",s:"單品・不算組合",z:"O",v:700},
+ {id:"sz",n:"三藏",s:"衣索比亞單品",z:"B",v:700},
  {id:"dr",n:"展場特調",s:"一杯",z:"O",v:200,nostock:1},
- {id:"rd",n:"兌換贈送特調",s:"客人來換送的那杯",z:"O",v:0,nostock:1}];
+ {id:"rd",n:"兌換贈送特調",s:"客人來換送的那杯",z:"O",v:0,nostock:1},
+ {id:"T恤M",n:"九週年 T 恤 M",s:"",z:"T",v:700},
+ {id:"T恤L",n:"九週年 T 恤 L",s:"",z:"T",v:700},
+ {id:"T恤XL",n:"九週年 T 恤 XL",s:"",z:"T",v:700},
+ {id:"T恤2XL",n:"九週年 T 恤 2XL",s:"",z:"T",v:700}];
 const GIFT={id:"cup",n:"「宮」玻璃杯（贈品）"};
 const I={};ITEMS.forEach(x=>I[x.id]=x);
 /* ===== 資料：每個動作都記成一筆「紀錄」，各手機互相同步紀錄，再算出訂單和庫存 ===== */
@@ -276,7 +282,7 @@ function btnHTML(x){
 }
 function drawSell(){
   document.getElementById("noStock").hidden=ITEMS.some(x=>!x.nostock&&db.stock[x.id]>0);
-  ["A","B","O"].forEach(z=>document.getElementById("g"+z).innerHTML=ITEMS.filter(x=>x.z===z).map(btnHTML).join(""));
+  ["A","B","O","T"].forEach(z=>document.getElementById("g"+z).innerHTML=ITEMS.filter(x=>x.z===z).map(btnHTML).join(""));
   const r=calc(cart);
   document.getElementById("sum").innerHTML=r.n?`${r.n} 件　<b>${fmt(r.total)}</b><br><small>${r.pairs?`組合 ${r.pairs} 組（−${fmt(r.off)}）・送特調 ${r.pairs} 杯`:"豆子兩包就成一組"}${r.gift?"・送宮杯":""}</small>`:"還沒有點任何商品";
   document.getElementById("go").disabled=!r.n;document.getElementById("clr").hidden=!r.n;
@@ -340,7 +346,7 @@ function drawStat(){
    ["組合數",sum(o=>o.pairs)+" 組"],["送出特調",sum(o=>o.pairs)+" 杯"],["兌換特調",sum(o=>o.items.rd||0)+" 杯"],["送出宮杯",sum(o=>o.gift)+" 個"]].map(([a,b])=>`<div><small>${a}</small><b>${b}</b></div>`).join("");
   const d=selDay==="all"?null:selDay;
   const rows=ITEMS.map(x=>{const q=used(x.id,d);return `<tr><td>${esc(x.n)}</td><td class="${q?"":"zero"}">${q}</td><td class="${q?"":"zero"}">${fmt(q*x.v)}</td><td${!x.nostock&&left(x.id)<=3?' class="low"':""}>${x.nostock?"—":left(x.id)}</td></tr>`}).join("");
-  const tq=ITEMS.filter(x=>!x.nostock).reduce((a,x)=>a+used(x.id,d),0);
+  const tq=ITEMS.filter(x=>!x.nostock&&x.z!=="T").reduce((a,x)=>a+used(x.id,d),0);
   document.getElementById("stbl").innerHTML=`<thead><tr><th>品項</th><th>數量</th><th>金額</th><th>剩下</th></tr></thead><tbody>${rows}
    <tr><td>${esc(GIFT.n)}</td><td>${used("cup",d)}</td><td>—</td><td>${db.stock.cup?left("cup"):"—"}</td></tr>
    <tr class="sumrow"><td>咖啡豆合計</td><td>${tq} 包</td><td></td><td></td></tr></tbody>`;
