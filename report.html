@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>MixCoffee 展場營收報表</title>
 <meta name="robots" content="noindex">
@@ -51,13 +51,14 @@ h2 .z{font-family:var(--f-num);font-size:26px}
 .btn.ghost{background:transparent;color:inherit;border:1px solid currentColor}
 .btn.leaf{background:var(--leaf)}
 .btn.sm{padding:6px 12px;font-size:13px}
-dialog{border:0;border-radius:14px;padding:0;width:min(560px,96vw);max-height:94vh;background:var(--paper);color:var(--ink)}
+dialog{border:0;border-radius:14px;padding:0;width:min(560px,calc(100vw - 16px));max-width:calc(100vw - 16px);max-height:92vh;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;margin:auto;background:var(--paper);color:var(--ink)}
 dialog::backdrop{background:rgba(0,0,0,.5)}
-.dlg{padding:18px;display:grid;gap:12px}
+.dlg{padding:16px 14px;display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+.dlg>*{min-width:0}
 .dlg h3{font-family:var(--f-display);font-size:22px;margin:0;display:flex;justify-content:space-between;align-items:center}
 .dlg h3 button{font-size:24px;background:none;border:0;color:var(--muted);padding:2px 8px}
 .ln{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px dashed var(--rule)}
-.ln .nm{flex:1}.ln .nm small{display:block;color:var(--muted);font-size:12px}
+.ln .nm{flex:1;min-width:0;overflow-wrap:anywhere}.ln .nm small{display:block;color:var(--muted);font-size:12px}
 .ln .amt{font-family:var(--f-num);font-weight:700;min-width:64px;text-align:right}
 .ln.disc .nm,.ln.disc .amt{color:var(--cherry)}
 .ln.gift .nm{color:var(--leaf);font-weight:700}
@@ -73,7 +74,7 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
 .pay input:checked+span{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .cash{display:grid;gap:6px;background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:10px 12px}
 .cash .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.cash input{font:inherit;font-family:var(--f-num);font-size:20px;width:120px;padding:6px 8px;border:1px solid var(--rule);border-radius:8px;background:#fff;color:var(--ink)}
+.cash input{font:inherit;font-family:var(--f-num);font-size:20px;width:120px;min-width:0;max-width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid var(--rule);border-radius:8px;background:#fff;color:var(--ink)}
 .chg{font-size:16px}.chg b{font-family:var(--f-num);font-size:24px;color:var(--leaf)}
 .note{font-size:13px;color:var(--muted);margin:0}
 .toast{position:fixed;left:50%;top:20px;transform:translateX(-50%);background:var(--leaf);color:#fff;padding:10px 20px;border-radius:999px;font-weight:700;z-index:50;box-shadow:0 6px 18px rgba(0,0,0,.2)}
@@ -151,7 +152,7 @@ th{white-space:nowrap}.btn.sm{white-space:nowrap}
   <section id="p-set" hidden>
     <div class="cash" style="gap:10px">
       <label>這支手機的名字（訂單編號會用，例如「收銀1」）<br><input id="devName" style="width:200px;font-family:var(--f-body)"></label>
-      <label>Google 同步網址（每支手機都要填一樣的）<br><input id="syncUrl" style="width:100%;font-size:14px;font-family:var(--f-body)" placeholder="https://script.google.com/macros/s/……/exec"></label>
+      <label>Google 同步網址（每支手機都要填一樣的）<br><input id="syncUrl" style="width:100%;font-size:16px;font-family:var(--f-body)" placeholder="https://script.google.com/macros/s/……/exec"></label>
       <div class="acts" style="margin-top:0"><button class="btn" id="saveSet">儲存並同步</button><button class="btn ghost" id="syncNow">立刻同步</button></div>
     </div>
     <p class="note" style="margin-top:10px">填了同步網址，每一筆訂單、補貨、庫存都會自動上傳到 Google 試算表，其他手機每 15 秒會自動抓最新資料。沒有網路時會先存在手機，有網路再自動補傳。</p>
@@ -179,11 +180,11 @@ th{white-space:nowrap}.btn.sm{white-space:nowrap}
     <label><input type="radio" name="pay" value="LINE Pay"><span>LINE Pay</span></label>
   </div>
   <div class="cash" id="cash">
-    <div class="row">收現金 <input id="recv" inputmode="numeric" placeholder="0">
+    <div class="row">收現金 <input id="recv" inputmode="numeric" placeholder="0" size="6">
       <button class="btn ghost sm" data-r="exact">剛好</button><button class="btn ghost sm" data-r="1000">$1,000</button><button class="btn ghost sm" data-r="2000">$2,000</button><button class="btn ghost sm" data-r="3000">$3,000</button></div>
     <div class="chg" id="chg">找零 <b>—</b></div>
   </div>
-  <div class="cash"><div>會員卡號（沒有可以不填）</div><div class="row"><input id="memNo" placeholder="掃描或輸入卡號" autocomplete="off" autocapitalize="characters" style="flex:1;width:auto;font-family:var(--f-body);font-size:18px"><button type="button" class="btn leaf sm" id="memScan" style="font-size:15px;padding:9px 14px">📷 掃描</button></div></div>
+  <div class="cash"><div>會員卡號（沒有可以不填）</div><div class="row" style="flex-wrap:nowrap"><input id="memNo" placeholder="掃描或輸入卡號" autocomplete="off" autocapitalize="characters" size="8" style="flex:1 1 0;width:0;min-width:0;font-family:var(--f-body);font-size:18px"><button type="button" class="btn leaf sm" id="memScan" style="font-size:15px;padding:9px 14px">📷 掃描</button></div></div>
   <div class="acts" style="margin-top:0"><button class="btn" id="done" style="flex:1">完成收款</button></div>
 </div></dialog>
 
