@@ -160,7 +160,6 @@ th{white-space:nowrap}.btn.sm{white-space:nowrap}
 
   <section id="p-list" hidden>
     <div id="olist"></div>
-    <div class="acts"><button class="btn ghost" id="wipe" style="color:var(--cherry)">清除全部訂單（展覽前測試用）</button></div>
   </section>
 </div>
 
@@ -409,7 +408,6 @@ function drawList(){
 }
 document.getElementById("olist").addEventListener("click",e=>{const b=e.target.closest("[data-void]");if(!b)return;const o=db.orders.find(x=>x.oid===b.dataset.void);
   if(!o.void&&!confirm(`確定要作廢第 ${o.no} 筆（${fmt(o.total)}）嗎？庫存會加回去。`))return;emit("void",{oid:o.oid,v:!o.void});drawList()});
-document.getElementById("wipe").onclick=()=>{if(!db.orders.length)return;if(confirm("確定要清除全部訂單和補貨紀錄嗎？每支連線的手機都會一起清掉。\n（一開始帶來的數量會保留）")&&confirm("真的要清除嗎？請再確認一次。")){emit("reset",{});drawList();toast("已清除全部訂單（每支手機都會清掉）")}};
 
 /* 分頁、提示 */
 const tabs=[...document.querySelectorAll("[role=tab]")];
