@@ -137,6 +137,8 @@ th{white-space:nowrap}.btn.sm{white-space:nowrap}
     <div class="days" id="days"></div>
     <div class="kpi" id="kpi"></div>
     <table id="stbl"></table>
+    <h2>會員消費</h2>
+    <div id="mtbl"></div>
     <div class="acts"><button class="btn leaf" id="csv">下載訂單明細（Excel 可開）</button></div>
   </section>
 
@@ -181,6 +183,7 @@ th{white-space:nowrap}.btn.sm{white-space:nowrap}
       <button class="btn ghost sm" data-r="exact">剛好</button><button class="btn ghost sm" data-r="1000">$1,000</button><button class="btn ghost sm" data-r="2000">$2,000</button><button class="btn ghost sm" data-r="3000">$3,000</button></div>
     <div class="chg" id="chg">找零 <b>—</b></div>
   </div>
+  <div class="cash"><div>會員卡號（沒有可以不填）</div><div class="row"><input id="memNo" placeholder="掃描或輸入卡號" autocomplete="off" autocapitalize="characters" style="flex:1;width:auto;font-family:var(--f-body);font-size:18px"><button type="button" class="btn leaf sm" id="memScan" style="font-size:15px;padding:9px 14px">📷 掃描</button></div></div>
   <div class="acts" style="margin-top:0"><button class="btn" id="done" style="flex:1">完成收款</button></div>
 </div></dialog>
 
@@ -322,7 +325,7 @@ function drawDlg(){
 }
 function chg(){const r=calc(cart),v=+document.getElementById("recv").value.replace(/\D/g,"")||0;
   document.getElementById("chg").innerHTML=v?(v>=r.total?`找零 <b>${fmt(v-r.total)}</b>`:`<span style="color:var(--cherry)">還差 ${fmt(r.total-v)}</span>`):"找零 <b>—</b>"}
-document.getElementById("go").onclick=()=>{document.getElementById("recv").value="";drawDlg();dlg.showModal()};
+document.getElementById("go").onclick=()=>{document.getElementById("recv").value="";document.getElementById("memNo").value="";drawDlg();dlg.showModal()};
 document.getElementById("x").onclick=()=>dlg.close();
 dlg.addEventListener("close",drawSell);
 document.getElementById("lines").addEventListener("click",e=>{
@@ -341,7 +344,8 @@ document.getElementById("done").onclick=()=>{
   const pay=r.total===0?"免付款":document.querySelector("input[name=pay]:checked").value;
   if(pay==="現金"){const v=+document.getElementById("recv").value.replace(/\D/g,"")||0;if(v&&v<r.total){toast("收的錢不夠",1);return}}
   st.seq=(st.seq||0)+1;const no=st.dev+"-"+st.seq;
-  emit("order",{no,items:{...cart},sub:r.sub,off:r.off,total:r.total,pairs:r.pairs,gift:r.gift,pay});
+  const member=document.getElementById("memNo").value.trim();
+  emit("order",{no,items:{...cart},sub:r.sub,off:r.off,total:r.total,pairs:r.pairs,gift:r.gift,pay,member});
   cart={};dlg.close();
   document.querySelector("input[name=pay][value=現金]").checked=true;document.getElementById("cash").hidden=false;
   toast(`#${no} 完成 ${fmt(r.total)}`);drawSell();
@@ -359,16 +363,23 @@ function drawStat(){
    ["營業額",fmt(sum(o=>o.total))],["訂單數",os.length+" 筆"],["現金",fmt(byPay("現金"))],["轉帳",fmt(byPay("轉帳"))],["LINE Pay",fmt(byPay("LINE Pay"))],
    ["組合數",sum(o=>o.pairs)+" 組"],["送出特調",sum(o=>o.pairs)+" 杯"],["兌換特調",sum(o=>o.items.rd||0)+" 杯"],["送出宮杯",sum(o=>o.gift)+" 個"]].map(([a,b])=>`<div><small>${a}</small><b>${b}</b></div>`).join("");
   const d=selDay==="all"?null:selDay;
-  const rows=ITEMS.map(x=>{const q=used(x.id,d,1);return `<tr><td>${esc(x.n)}</td><td class="${q?"":"zero"}">${q}</td><td class="${q?"":"zero"}">${fmt(q*x.v)}</td><td${!x.nostock&&left(x.id)<=3?' class="low"':""}>${x.nostock||x.hidden?"—":left(x.id)}</td></tr>`}).join("");
+  const rows=ITEMS.map(x=>{const q=used(x.id,d,1);return `<tr><td>${esc(x.n)}</td><td class="${q?"":"zero"}">${q}</td><td class="${q?"":"zero"}">${fmt(q*x.v)}</td><td${!x.nostock&&!x.hidden&&left(x.id)<=3?' class="low"':""}>${x.nostock||x.hidden?"—":left(x.id)}</td></tr>`}).join("");
   const tq=ITEMS.filter(x=>!x.nostock&&x.z!=="T").reduce((a,x)=>a+used(x.id,d),0);
   document.getElementById("stbl").innerHTML=`<thead><tr><th>品項</th><th>數量</th><th>金額</th><th>剩下</th></tr></thead><tbody>${rows}
    <tr><td>${esc(GIFT.n)}</td><td>${used("cup",d)}</td><td>—</td><td>${db.stock.cup?left("cup"):"—"}</td></tr>
    <tr class="sumrow"><td>咖啡豆合計</td><td>${tq} 包</td><td></td><td></td></tr></tbody>`;
 }
+function drawMem(){
+  const os=db.orders.filter(o=>!o.void&&o.member&&(selDay==="all"||o.day===selDay)),M={};
+  os.forEach(o=>{const m=M[o.member]=M[o.member]||{n:0,t:0,it:{}};m.n++;m.t+=o.total;for(const k in o.items)m.it[k]=(m.it[k]||0)+o.items[k]});
+  const ks=Object.keys(M).sort((a,b)=>M[b].t-M[a].t);
+  document.getElementById("mtbl").innerHTML=ks.length?`<table><thead><tr><th>會員卡號</th><th>筆數</th><th>消費金額</th></tr></thead><tbody>${ks.map(k=>`<tr><td>${esc(k)}<br><small class="note">${Object.keys(M[k].it).map(i=>esc(I[i]?I[i].n:i)+"×"+M[k].it[i]).join("、")}</small></td><td>${M[k].n}</td><td>${fmt(M[k].t)}</td></tr>`).join("")}<tr class="sumrow"><td>合計 ${ks.length} 位會員</td><td>${os.length}</td><td>${fmt(os.reduce((a,o)=>a+o.total,0))}</td></tr></tbody></table>`:'<p class="note">這段期間沒有登記會員卡號的訂單</p>';
+}
 document.getElementById("days").addEventListener("click",e=>{const b=e.target.closest("[data-day]");if(b){selDay=b.dataset.day;drawStat()}});
+const _ds=drawStat;drawStat=function(){_ds();drawMem()};
 document.getElementById("csv").onclick=()=>{
-  const head=["編號","日期","時間","品項","原價","組合折扣","實收","付款方式","組合數","送特調","送宮杯","狀態"];
-  const rows=db.orders.map(o=>{const d=new Date(o.t);return [o.no,o.day,p2(d.getHours())+":"+p2(d.getMinutes()),Object.keys(o.items).map(k=>I[k].n+"×"+o.items[k]).join("、"),o.sub,o.off,o.total,o.pay,o.pairs,o.pairs,o.gift,o.void?"已作廢":""]});
+  const head=["編號","日期","時間","會員卡號","品項","原價","組合折扣","實收","付款方式","組合數","送特調","送宮杯","狀態"];
+  const rows=db.orders.map(o=>{const d=new Date(o.t);return [o.no,o.day,p2(d.getHours())+":"+p2(d.getMinutes()),o.member?"\t"+o.member:"",Object.keys(o.items).map(k=>I[k].n+"×"+o.items[k]).join("、"),o.sub,o.off,o.total,o.pay,o.pairs,o.pairs,o.gift,o.void?"已作廢":""]});
   const csv="﻿"+[head,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\r\n");
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download=`展場訂單_${dayOf(new Date())}.csv`;a.click();
 };
@@ -391,7 +402,7 @@ document.getElementById("p-stock").addEventListener("click",e=>{
 /* 訂單紀錄 */
 function drawList(){
   const os=[...db.orders].reverse();
-  document.getElementById("olist").innerHTML=os.length?os.map(o=>{const d=new Date(o.t);return `<div class="order${o.void?" void":""}"><div class="hd"><b>#${o.no}</b><span class="t">${dayLabel(o.day)} ${p2(d.getHours())}:${p2(d.getMinutes())}</span><span class="tag">${esc(o.pay)}</span>${o.void?'<span class="tag v">已作廢</span>':""}<span class="sp"></span><b>${fmt(o.total)}</b></div>
+  document.getElementById("olist").innerHTML=os.length?os.map(o=>{const d=new Date(o.t);return `<div class="order${o.void?" void":""}"><div class="hd"><b>#${o.no}</b><span class="t">${dayLabel(o.day)} ${p2(d.getHours())}:${p2(d.getMinutes())}</span><span class="tag">${esc(o.pay)}</span>${o.member?`<span class="tag" style="color:var(--cherry)">會員 ${esc(o.member)}</span>`:""}${o.void?'<span class="tag v">已作廢</span>':""}<span class="sp"></span><b>${fmt(o.total)}</b></div>
    <div class="it">${Object.keys(o.items).map(k=>esc(I[k].n)+" ×"+o.items[k]).join("、")}${o.pairs?`<br><small class="note">組合 ${o.pairs} 組 −${fmt(o.off)}・送特調 ${o.pairs} 杯</small>`:""}${o.gift?'<small class="note">・送宮杯</small>':""}</div>
    <div><button class="btn ghost sm" data-void="${o.oid}">${o.void?"恢復這筆":"作廢這筆（打錯時用）"}</button></div></div>`}).join(""):`<p class="empty">還沒有訂單</p>`;
 }
